@@ -1,30 +1,24 @@
+// <order-form>
+// RUN https://order-form.github.io
+// The whole concept is <product-card> *always* displays its associated <selected-product>
+// You can HIDE that component if none are ordered
+// Stick plenty of information as attributes on components, then CSS can do its magic
+// ObservedAttributes can help, so other code in the page can update/change the <order-form>
+
+// This script shows different techniques for demonstrations purposes
+// - communication with events
+// - "click" handlers that proces mulitple buttons (like increase/decrease)
+
 // **************************************************************************** BaseClassOrderFormComponent
 class BaseClassOrderFormComponent extends HTMLElement {
   // ======================================================================== constructor
-  constructor({ shadowRoot = true } = { shadowRoot: true }) {
-    super();
-    //if (shadowRoot) this.attachShadow({ mode: "open" });
-    //this.constructor();
-  }
-
-  // ======================================================================== load
-  load(tag) {
-    return new Promise((resolve, reject) => {
-      document.head.append(Object.assign(document.createElement("script")), {
-        src: this.elementURL(tag),
-        onload: (e) => resolve(null),
-        onerror: (e) => reject(new Error("failed to load custom-element")),
-      });
-    });
-  }
-  // ======================================================================== TEMPLATE
-  getTemplate(nodeName = this.nodeName) {}
   // ======================================================================== get form
   get form() {
     return this.getRootNode().host || this.closest("order-form");
   }
   // ======================================================================== DOM
   // ======================================================================== element
+  // create a DOM element with properties (like innerHTML and Event handlers)
   element(tag = "DIV", props = {}) {
     if (typeof props == "string") props = { innerHTML: props };
     let element = Object.assign(document.createElement(tag), props);
@@ -45,17 +39,19 @@ class BaseClassOrderFormComponent extends HTMLElement {
   appendLightDOM(...args) {
     this.append(...args);
   }
-  #styleID = false;
-  addScopedLightDOMSTYLE(css) {
-    // todo process multiple selectors in css
-    // add <style> to lightDOM, prefixed with styleID so the CSS is scoped to this element
-    if (!this.#styleID) {
-      this.#styleID = ~~(Math.random() * 1e8); // create a unique FORMID for this element
-      this.setAttribute(this.localName, this.#styleID);
-    }
-    let prefix = `[${this.localName}="${this.#styleID}"]`;
-    this.appendLightDOM(this.STYLE(`${prefix} ${css}`));
-  }
+
+  // style code used for other demo
+  // #styleID = false;
+  // addScopedLightDOMSTYLE(css) {
+  //   // todo process multiple selectors in css
+  //   // add <style> to lightDOM, prefixed with styleID so the CSS is scoped to this element
+  //   if (!this.#styleID) {
+  //     this.#styleID = ~~(Math.random() * 1e8); // create a unique FORMID for this element
+  //     this.setAttribute(this.localName, this.#styleID);
+  //   }
+  //   let prefix = `[${this.localName}="${this.#styleID}"]`;
+  //   this.appendLightDOM(this.STYLE(`${prefix} ${css}`));
+  // }
   // ======================================================================== query DOM
   shadowRootSelector(sel) {
     return super.shadowRoot?.querySelector(sel) || super.querySelector(sel);
@@ -175,9 +171,10 @@ customElements.define(
       this.addScopedLightDOMSTYLE(`button{cursor:pointer}`);
       this.addScopedLightDOMSTYLE(`product-card[qty="0"] div{opacity:.3}`);
       // ----------------------------------------------------------------------
-      // Listen for the "ADDPRODUCT" event from ANY <product-card> element
+      // Listen for the event from ANY <product-card> element
       // then dispatch a new event with the product NAME and product item details
       // the correct <selected-product> element will listen for this event name
+      // overly complex for this demo, but you need concepts like these in more complex components
       this.addEventListener("ORDER-FORM-EVENT", (evt) => {
         // ignore events that are dispatched from this element (endless loop)
         if (this.nodeName !== evt.target.nodeName) {
@@ -298,14 +295,15 @@ customElements.define(
       return this.form.querySelector(`#${scope.nodeName}`);
     }
     getComponentDOM(scope = this) {
+      // now using template, index.html does have hidden "standard" <order-form>
       let template = this.getFormTemplate(scope);
       if (template) template = [template.content.cloneNode(true)];
-      else template = (
-
-       this.defaultDOM
-      );
+      else template = this.defaultDOM;
       return template;
     }
+
+    // experiment with reactivity
+    // every [attr] labeled element gets updated
     updateAttrNodes(){
       [...this.shadowRoot.querySelectorAll("[attr]")].map(el=>{
         let attrName = el.getAttribute("attr");
@@ -396,6 +394,7 @@ customElements.define(
 
 // **************************************************************************** BaseClassOrderFormButton
 class BaseClassOrderFormButton extends BaseClassOrderFormComponent {
+  // ready for other types buttons, now only serving one
   // ====================================================================== BaseClassOrderFormButton connectedCallback
   connectedCallback({ label, detail }) {
     this.innerHTML = `<button>${label}</button>`;
@@ -414,33 +413,6 @@ class BaseClassOrderFormButton extends BaseClassOrderFormComponent {
   }
   // ====================================================================== BaseClassOrderFormButton
 }
-// **************************************************************************** <select-button>
-customElements.define(
-  "select-button",
-  class extends BaseClassOrderFormButton {
-    // ==================================================================== <select-button> connectedCallback
-    connectedCallback() {
-      super.connectedCallback({
-        label: "Select",
-        detail: this.closest("product-card").item,
-      });
-      //   setTimeout(() => this.click());
-    }
-  }
-);
-// ============================================================================ <delete-button>
-customElements.define(
-  "delete-button",
-  class extends BaseClassOrderFormButton {
-    // ==================================================================== <delete-button> connectedCallback
-    connectedCallback() {
-      super.connectedCallback({
-        label: "Delete",
-        detail: this,
-      });
-    }
-  }
-);
 // ============================================================================ <add-to-card-button>
 customElements.define(
   "order-form-button",
@@ -455,45 +427,46 @@ customElements.define(
     }
   }
 );
+// style code used for other demo
 // **************************************************************************** <order-form-scoped-styles>
-customElements.define(
-  "order-form-scoped-styles",
-  class extends BaseClassOrderFormComponent {
-    constructor() {
-      super().attachShadow({ mode: "open" }).innerHTML = ``;
-    }
-    // ========================================================================
-    connectedCallback() {
-      // ----------------------------------------------------------------------
-      this.form
-        .querySelectorAll("template[scoped-style]")
-        .forEach((template) => {
-          let style = this.shadowRoot.appendChild(
-            template.content.cloneNode(true)
-          );
-          console.error(template.id, style, this.shadowRoot);
-        });
-      // ----------------------------------------------------------------------
-      console.error(this.shadowRoot.adoptedStyleSheets);
-      // ----------------------------------------------------------------------
-      [...document.styleSheets].forEach((sheet) => {
-        let orderFormNode = sheet.ownerNode.parentNode;
-        console.warn(sheet.cssRules);
-        if (orderFormNode == this.parentNode) {
-          let styleid = orderFormNode.getAttribute(this.localName);
-          console.error(
-            "sheet",
-            sheet.ownerNode.parentNode,
-            sheet.ownerNode.innerHTML,
-            styleid,
-            sheet.cssRules.length
-          );
-        }
-      });
-      // create a new <form-scoped-style> element
-      // read template style in shadowDOM
-      // process, add prefix on every selector
-      // move shadowDOM style to lightDOM
-    }
-  }
-);
+// customElements.define(
+//   "order-form-scoped-styles",
+//   class extends BaseClassOrderFormComponent {
+//     constructor() {
+//       super().attachShadow({ mode: "open" }).innerHTML = ``;
+//     }
+//     // ========================================================================
+//     connectedCallback() {
+//       // ----------------------------------------------------------------------
+//       this.form
+//         .querySelectorAll("template[scoped-style]")
+//         .forEach((template) => {
+//           let style = this.shadowRoot.appendChild(
+//             template.content.cloneNode(true)
+//           );
+//           console.error(template.id, style, this.shadowRoot);
+//         });
+//       // ----------------------------------------------------------------------
+//       console.error(this.shadowRoot.adoptedStyleSheets);
+//       // ----------------------------------------------------------------------
+//       [...document.styleSheets].forEach((sheet) => {
+//         let orderFormNode = sheet.ownerNode.parentNode;
+//         console.warn(sheet.cssRules);
+//         if (orderFormNode == this.parentNode) {
+//           let styleid = orderFormNode.getAttribute(this.localName);
+//           console.error(
+//             "sheet",
+//             sheet.ownerNode.parentNode,
+//             sheet.ownerNode.innerHTML,
+//             styleid,
+//             sheet.cssRules.length
+//           );
+//         }
+//       });
+//       // create a new <form-scoped-style> element
+//       // read template style in shadowDOM
+//       // process, add prefix on every selector
+//       // move shadowDOM style to lightDOM
+//     }
+//   }
+// );
