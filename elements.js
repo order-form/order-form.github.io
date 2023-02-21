@@ -40,18 +40,20 @@ class BaseClassOrderFormComponent extends HTMLElement {
     this.append(...args);
   }
 
-  // style code used for other demo
-  // #styleID = false;
-  // addScopedLightDOMSTYLE(css) {
-  //   // todo process multiple selectors in css
-  //   // add <style> to lightDOM, prefixed with styleID so the CSS is scoped to this element
-  //   if (!this.#styleID) {
-  //     this.#styleID = ~~(Math.random() * 1e8); // create a unique FORMID for this element
-  //     this.setAttribute(this.localName, this.#styleID);
-  //   }
-  //   let prefix = `[${this.localName}="${this.#styleID}"]`;
-  //   this.appendLightDOM(this.STYLE(`${prefix} ${css}`));
-  // }
+  // We will inject <style> elements in LIGHTDOM! To prevent them styling anything else in the page
+  // the selector is prefixed with a unique id
+  // React, Lit, Svelte, all those tools do that too
+  #styleID = false;
+  addScopedLightDOMSTYLE(css) {
+    // todo process multiple selectors in css
+    // add <style> to lightDOM, prefixed with styleID so the CSS is scoped to this element
+    if (!this.#styleID) {
+      this.#styleID = ~~(Math.random() * 1e8); // create a unique FORMID for this element
+      this.setAttribute(this.localName, this.#styleID);
+    }
+    let prefix = `[${this.localName}="${this.#styleID}"]`;
+    this.appendLightDOM(this.STYLE(`${prefix} ${css}`));
+  }
   // ======================================================================== query DOM
   shadowRootSelector(sel) {
     return super.shadowRoot?.querySelector(sel) || super.querySelector(sel);
