@@ -1,0 +1,66 @@
+<html>
+
+<head>
+    <script src="elements.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Example &lt;order-form> Web Component</h1>
+    <order-form hidden>
+        <template slot="scoped-style">
+            <style id="FOO">
+                span,
+                h1 {
+                    color: red;
+                }
+
+                order-form {
+                    border: 1px solid red;
+                    background: green;
+                }
+
+                .foo {color:red}
+
+                .bar {color:blue}
+            </style>
+        </template>
+        <h2 slot="title">Frameworks</h2>
+        <p slot="description">What components is your application made of</p>
+        <product-card name="React" qty="1"></product-card>
+        <product-card name="Lit"></product-card>
+        <product-cards keys="pid,name,qty,price">
+            88,Angular,5,2.99
+            99,Svelte,2,3.99
+        </product-cards>
+    </order-form>
+    <order-form>
+        <template id="PRODUCT-CARD">
+            <style>
+                .product-card {
+                    border: 1px solid gold;
+                    background: teal;
+                    color:beige;
+                    padding: 0 .5em .5em .5em;
+                    border-radius: .5em;
+                    box-shadow:  0 0 1em 0 rgba(0,0,0,0.5);
+                }
+            </style>
+            <div class="product-card">
+                <p><span attr="name">NAME</span></p>
+                <p>Order: <span attr="qty">??</span> items</p>
+                <order-form-button dispatch="ADDPRODUCT" label="add-to-cart">TODO?FOO</order-form-button>
+            </div>
+        </template>
+        <h2 slot="title">Cars</h2>
+        <product-card pid="1" name="Mercedes" qty="1"></product-card>
+        <product-card pid="77" name="Audi"></product-card>
+        <product-card pid="21" nme="Renault"></product-card>
+    </order-form>
+</body>
+
+</html>
